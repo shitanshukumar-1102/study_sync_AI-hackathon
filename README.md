@@ -1,88 +1,105 @@
 # StudySync AI – Smart Student Productivity Platform
 
-StudySync AI is a production-grade, gamified productivity companion built to assist students in tracking their assignments, managing daily schedules, generating AI summaries, and challenging themselves with interactive practice quizzes.
+StudySync AI is a gamified productivity platform built to help students manage assignments, track study schedules, generate notes summaries, and test their skills with custom quizzes. 
 
-This platform features a modern **glassmorphism user interface** that adapts between light and dark themes. It runs a **Python Flask backend**, integrates **Google Gemini 1.5 Flash** for content generation, and uses **Supabase** for user authentication and SQL cloud storage.
-
----
-
-## 🚀 Key Features
-
-1. **Smart Task Manager**: Organize study tasks by category and priority. Check off items to directly earn XP and Coins.
-2. **AI Summarization Space**: Upload documents (notes, assignments) or supply topics to receive a comprehensive summary, key takeaways, and quick revision cues.
-3. **AI MCQ Quizzer**: Generate a 5-question multiple choice test based on note inputs. Play through an interactive board, get explanations, and submit scores for rewards.
-4. **Gamified Quests & Streaks**: Maintain active consecutive login streaks. Complete randomized daily challenges to earn bonus coins.
-5. **Achievement Badges Store**: Redeem accumulated coins to buy and show off badges on your profile page.
-6. **Peer Study Rooms**: Simulated chatrooms to collaborate and get study tips from bots on different topics (Data Structures, DBMS, OS).
-7. **Productivity Analytics**: View progress logs and study velocities with dynamic graphs.
+The application utilizes a glassmorphic dark-theme user interface running on a Python Flask backend. It connects to Google Gemini 1.5 Flash for notes summarization and quiz generation, and integrates Supabase for user auth and cloud database storage.
 
 ---
 
-## 📁 Folder Structure
+## 🔥 Key Features
+
+- **Smart Task Checklist**: Organize study tasks by course category and priority level. Check off completed items to instantly earn XP and Coins.
+- **AI Summary Engine**: Input notes or topic keywords to receive structured summary sheets, quick revision bulletins, and key takeaways.
+- **AI MCQ Quizzer**: Auto-generate 5-question practice quizzes from notes. Get instant answer verification, score reports, and coins/XP rewards on completion.
+- **Quest & Streak tracker**: Maintain daily study streaks. Complete random daily quests to score extra coin rewards.
+- **Badge Showcase**: Buy custom badges in the shop using earned coins and display them on your academic profile page.
+- **Dynamic Leaderboard**: See real-time standings of all registered students sorted by total XP, highlighting your own position.
+- **Peer Chat Rooms**: Join custom study spaces to chat with classmates in real-time. No bots, just peer-to-peer collaboration.
+- **Web Audio Sound Effects**: Custom synthesized 8-bit sounds that trigger on button clicks, task completions, quiz grades, chat arrivals, and quest unlocks.
+
+---
+
+## 🛠️ Tech Stack & Architecture Updates
+
+### 1. Flask-Based Chat Syncing
+Instead of relying on fragile client-side real-time listeners or WebSockets (which often drop connections or hit rate limits on free hosting plans like Render), the chat system runs on a lightweight polling architecture:
+- Messages are processed and synchronized through backend routes (`/api/chat/messages` and `/api/chat/send`).
+- A message ID deduplication set on the frontend prevents duplicate bubble rendering.
+- Guaranteed real-time delivery across multiple browser windows or devices.
+
+### 2. Live Leaderboard System
+The leaderboard is populated dynamically from database statistics (`/api/leaderboard`):
+- Standings are fetched, sorted, and rendered on the client side.
+- Highlights your row with special styles and appends a `(You)` label to help you find your rank instantly.
+
+### 3. Web Audio API Synthesizer
+Rather than loading heavy audio assets (MP3s/WAVs) that slow down page loads, we use the browser's built-in `AudioContext` to synthesize sound effects dynamically:
+- Short frequency burst on clicking navigation links and buttons.
+- A rising C5-to-G5 tone on task completion.
+- A soft bubble-pop sound on incoming chat messages.
+- Clean double-chimes for correct quiz answers and descending sweep for incorrect ones.
+- Triumphant fanfare arpeggio on leveling up or claiming rewards.
+
+### 4. Cache-Busting Imports
+All templates load JS static scripts with a version query parameter (`script.js?v=3`). This forces client browsers to fetch the latest code updates immediately, skipping cached files.
+
+---
+
+## 📁 File Directory
 
 ```text
 StudySync-AI/
-├── app.py                  # Core Flask server, routing controller, and API endpoints
-├── database.py             # DB controller (Supabase client + SQLite local persistence fallback)
-├── gemini.py               # Google Gemini AI connection (with detailed local subject fallback data)
+├── app.py                  # Core Flask server, route controllers, and API routing
+├── database.py             # Database wrapper (Supabase integration + SQLite local fallback)
+├── gemini.py               # Gemini API connector (includes structured fallback data)
 ├── requirements.txt        # Backend dependencies
-├── .env.example            # Environment variables template
-├── README.md               # Setup and deployment guides
-├── templates/              # HTML layout templates
-│   ├── index.html          # Landing page & auth modals
-│   ├── dashboard.html      # Main study cockpit & task checklists
-│   ├── challenges.html     # Daily quests & peer chat simulation
-│   └── profile.html        # Academic records & badge shop
-└── static/                 # Static asset delivery
-    ├── style.css           # Vanilla CSS styles, themes, and layouts
-    ├── auth.js             # Authentication managers (Supabase + local mock storage)
-    ├── api.js              # Fetch connection client to Flask API
-    └── script.js           # DOM controllers, ChartJS charts, and quiz game loops
+├── README.md               # Documentation and setup instructions
+├── templates/              # Jinja2 HTML layout views
+│   ├── index.html          # Portal landing and user registration
+│   ├── dashboard.html      # Study cockpit, timers, and AI generators
+│   ├── challenges.html     # Leaderboards and peer study chats
+│   └── profile.html        # Badges shop and academic dashboard
+└── static/                 # Styles and frontend scripts
+    ├── style.css           # Vanilla CSS rules, theme variables, and grid layouts
+    ├── auth.js             # User login/signup frontend handlers
+    ├── api.js              # Fetch client utility wrapping Flask endpoints
+    └── script.js           # Core DOM controller, charting, and sound synthesizer
 ```
 
 ---
 
-## 🛠️ Local Installation & Setup
+## 💻 Local Installation & Setup
 
-Follow these steps to configure StudySync AI locally:
-
-### 1. Clone & Initialize Workspace
-Create a folder named `StudySync-AI` and copy these project files inside. Navigate to the directory in your terminal.
-
-### 2. Configure Virtual Environment & Install Dependencies
-Create a virtual environment and run the package installer:
-```powershell
-# Create environment
-python -m venv venv
-
-# Activate environment (Windows)
-.\venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Setup Environment Secrets
-Copy `.env.example` into a new file named `.env`:
-```bash
-cp .env.example .env
-```
-Open `.env` and fill out the configuration variables:
-- **`FLASK_SECRET_KEY`**: Set a random string to secure session cookies.
-- **`SUPABASE_URL`** & **`SUPABASE_ANON_KEY`**: Found under **Project Settings ➔ API** in your Supabase Console.
-- **`GEMINI_API_KEY`**: Generate a free key from [Google AI Studio](https://aistudio.google.com/).
-
-> [!NOTE]
-> If Supabase credentials or Gemini Keys are left at default or blank, the platform automatically switches to **Mock Demo Mode**. It will initialize a local SQLite file (`studysync.db`) and serve realistic simulated AI content so judges can test all features instantly without cloud setup!
+1. **Clone the Repository** and open the project directory in your terminal.
+2. **Create a Virtual Environment & Install Dependencies**:
+   ```powershell
+   # Setup environment
+   python -m venv venv
+   
+   # Activate environment (Windows)
+   .\venv\Scripts\activate
+   
+   # Install backend packages
+   pip install -r requirements.txt
+   ```
+3. **Configure Environment Secrets**:
+   Copy `.env.example` to a new file named `.env` and fill out the values:
+   ```bash
+   FLASK_SECRET_KEY="your-random-cookie-key"
+   SUPABASE_URL="https://your-supabase-project.supabase.co"
+   SUPABASE_ANON_KEY="your-supabase-public-anon-key"
+   GEMINI_API_KEY="your-google-studio-api-key"
+   ```
+   *Note: If you leave the credentials empty, the app falls back to Mock Mode. It will initialize a local SQLite file (`studysync.db`) and serve simulated AI summaries/quizzes so you can test the platform instantly.*
 
 ---
 
-## ⚡ Supabase SQL Setup Schema
+## ⚡ SQL Database Schema
 
-Create a new query under **SQL Editor ➔ New query** in your Supabase Dashboard and run this script to establish the required tables:
+Run this SQL script in your Supabase SQL Editor or apply it to your database to set up the schema:
 
 ```sql
--- 1. Create a public users table extending Supabase auth
+-- 1. User Profiles
 CREATE TABLE public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT UNIQUE NOT NULL,
@@ -100,10 +117,7 @@ CREATE TABLE public.users (
     badges TEXT DEFAULT 'freshman'
 );
 
--- Note: If you have already created the users table, execute the migration query below:
--- ALTER TABLE public.users ADD COLUMN badges TEXT DEFAULT 'freshman';
-
--- 2. Create tasks table
+-- 2. Tasks Checklist
 CREATE TABLE public.tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
@@ -115,7 +129,7 @@ CREATE TABLE public.tasks (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
--- 3. Create daily challenges table
+-- 3. Daily Challenges
 CREATE TABLE public.challenges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
@@ -131,48 +145,15 @@ CREATE TABLE public.challenges (
 );
 ```
 
-Ensure that policies are created or Row Level Security (RLS) is disabled for the `users`, `tasks`, and `challenges` tables so the client can query them.
-
 ---
 
-## 💻 Running the Application
+## 🚀 Deployment Guide
 
-Start the Flask development server:
-```bash
-python app.py
-```
-Open your browser and navigate to: **`http://localhost:5000`**
-
----
-
-## ☁️ Cloud Deployment Guides
-
-### Backend (Render)
-1. Push your repository to GitHub.
-2. Sign in to [Render](https://render.com/) and create a new **Web Service**.
-3. Link your GitHub repository.
-4. Set the following settings:
+### Render (Backend Hosting)
+1. Push the code to a GitHub repository.
+2. Create a new **Web Service** on Render, and link the repository.
+3. Configure these build settings:
    - **Environment**: `Python`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app` (Make sure to add `gunicorn` to your requirements.txt if deploying to Linux, or use `python app.py`).
-5. Open **Environment Variables** in Render and paste your `.env` secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `GEMINI_API_KEY`, etc.).
-
-### Frontend Hosting (Vercel)
-Since this is a full-stack Flask application, you can deploy the entire app to Vercel by adding a `vercel.json` routing configuration in the root:
-```json
-{
-  "builds": [
-    {
-      "src": "app.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app.py"
-    }
-  ]
-}
-```
-Deploy the project using Vercel CLI (`vercel`) or by linking the repository directly to your Vercel Dashboard.
+   - **Start Command**: `gunicorn app:app`
+4. Go to the **Environment** tab on Render and paste the environment variables from your `.env` file.
