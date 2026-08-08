@@ -108,5 +108,10 @@ window.StudySyncAPI = {
     getChatMessages: async function(room) {
         const res = await fetch(`/api/chat/messages?room=${room}`);
         return await res.json();
+    },
+
+    getLeaderboard: async function() {
+        const res = await fetch('/api/leaderboard');
+        return await res.json();
     }
 };

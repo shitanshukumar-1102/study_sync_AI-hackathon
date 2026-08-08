@@ -1153,7 +1153,86 @@ window.StudySyncUI = {
     initChallengesPage: async function() {
         this.loadQuestsList();
         this.initStudyGroupsChat();
-        this.refreshGlobalProfileStats();
+        await this.refreshGlobalProfileStats();
+        this.loadLeaderboard();
+    },
+
+    loadLeaderboard: async function() {
+        const container = document.querySelector('.leaderboard-list');
+        if (!container) return;
+
+        try {
+            const res = await window.StudySyncAPI.getLeaderboard();
+            if (res.success && res.leaderboard) {
+                const list = res.leaderboard;
+                
+                // If there are fewer than 3 users, show actual database order or fallback to nice defaults
+                const rank1 = list[0] || { full_name: "Sneha Patel", xp: 3120, level: 3, streak: 5 };
+                const rank2 = list[1] || { full_name: "Amit Mishra", xp: 2850, level: 2, streak: 4 };
+                const rank3 = list[2] || { full_name: "Divya Sharma", xp: 2410, level: 2, streak: 3 };
+
+                // Build podium HTML
+                let html = `
+                    <div class="leaderboard-podium">
+                        <!-- Rank 2 -->
+                        <div class="podium-col p-2">
+                            <div class="podium-avatar border-silver">
+                                <div class="avatar-placeholder">${(rank2.full_name || "AM").slice(0,2).toUpperCase()}</div>
+                                <span class="podium-rank">2</span>
+                            </div>
+                            <span class="podium-name">${this.escapeHTML(rank2.full_name)}</span>
+                            <span class="podium-xp text-silver">${rank2.xp.toLocaleString()} XP</span>
+                        </div>
+                        <!-- Rank 1 -->
+                        <div class="podium-col p-1">
+                            <div class="podium-avatar border-gold">
+                                <div class="avatar-placeholder">${(rank1.full_name || "SP").slice(0,2).toUpperCase()}</div>
+                                <i data-lucide="crown" class="crown-icon"></i>
+                                <span class="podium-rank">1</span>
+                            </div>
+                            <span class="podium-name">${this.escapeHTML(rank1.full_name)}</span>
+                            <span class="podium-xp text-gold">${rank1.xp.toLocaleString()} XP</span>
+                        </div>
+                        <!-- Rank 3 -->
+                        <div class="podium-col p-3">
+                            <div class="podium-avatar border-bronze">
+                                <div class="avatar-placeholder">${(rank3.full_name || "DS").slice(0,2).toUpperCase()}</div>
+                                <span class="podium-rank">3</span>
+                            </div>
+                            <span class="podium-name">${this.escapeHTML(rank3.full_name)}</span>
+                            <span class="podium-xp text-bronze">${rank3.xp.toLocaleString()} XP</span>
+                        </div>
+                    </div>
+
+                    <hr class="leaderboard-divider">
+                `;
+
+                // Render subsequent users starting from index 3 (Rank 4)
+                for (let i = 3; i < list.length; i++) {
+                    const user = list[i];
+                    const isMe = user.id === (userProfile && (userProfile.id || userProfile.user_id) || "");
+                    
+                    html += `
+                        <div class="leaderboard-item ${isMe ? 'user-item' : ''}">
+                            <span class="item-rank">${i + 1}</span>
+                            <div class="item-avatar">
+                                <div class="avatar-placeholder">${(user.full_name || "ST").slice(0,2).toUpperCase()}</div>
+                            </div>
+                            <div class="item-details">
+                                <span class="item-name">${this.escapeHTML(user.full_name)}${isMe ? ' (You)' : ''}</span>
+                                <span class="item-stats">Level ${user.level || 1} • ${user.streak || 0} day streak</span>
+                            </div>
+                            <span class="item-score">${user.xp.toLocaleString()} XP</span>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        } catch(e) {
+            console.error("Error loading leaderboard", e);
+        }
     },
 
     loadQuestsList: async function() {
@@ -1242,6 +1321,7 @@ window.StudySyncUI = {
                                 
                                 this.loadQuestsList();
                                 this.refreshGlobalProfileStats();
+                                this.loadLeaderboard();
                             }
                         } catch (err) {
                             this.showToast("Connection issue claiming reward", "error");

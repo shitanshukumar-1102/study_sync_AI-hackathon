@@ -587,3 +587,32 @@ def get_weekly_history(user_id):
         })
     return result
 
+
+def get_leaderboard_data():
+    """Retrieves all registered users ordered by XP descending to build the leaderboard."""
+    use_sqlite_fallback = False
+    
+    if not use_sqlite and supabase_client:
+        try:
+            # Query supabase for all users ordered by xp descending
+            res = supabase_client.table("users").select("id, full_name, xp, level, streak").order("xp", desc=True).limit(50).execute()
+            return res.data
+        except Exception as e:
+            print(f"Supabase Error in get_leaderboard_data: {e}. Falling back to SQLite.")
+            use_sqlite_fallback = True
+    else:
+        use_sqlite_fallback = True
+        
+    if use_sqlite_fallback:
+        try:
+            conn = get_sqlite_conn()
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, full_name, xp, level, streak FROM users ORDER BY xp DESC LIMIT 50")
+            rows = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            return rows
+        except Exception as e:
+            print(f"SQLite Error in get_leaderboard_data: {e}")
+            return []
+
+

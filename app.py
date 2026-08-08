@@ -492,6 +492,14 @@ def api_analytics_history():
     return jsonify({"success": True, "history": history})
 
 
+@app.route("/api/leaderboard", methods=["GET"])
+@login_required
+def api_leaderboard():
+    """Returns the registered users sorted by XP descending for the leaderboard."""
+    leaderboard = db.get_leaderboard_data()
+    return jsonify({"success": True, "leaderboard": leaderboard})
+
+
 @app.route("/api/config")
 def api_config():
     """Exposes public Supabase credentials or configures Mock Mode."""
