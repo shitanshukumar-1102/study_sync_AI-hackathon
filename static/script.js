@@ -1351,38 +1351,15 @@ window.StudySyncUI = {
 
         // Mock chat messages databases by rooms
         const mockChats = {
-            algorithms: [
-                { sender: "Sneha P.", text: "Anyone working on binary tree traversal summaries? Need a quick recap on post-order recursion.", time: "10:15" },
-                { sender: "Amit M.", text: "Hey Sneha! Check Option 1 summaries. I uploaded recursion notes there earlier.", time: "10:18" },
-                { sender: "System", text: "Priyanka Sen joined the study room.", time: "10:20" }
-            ],
-            dbms: [
-                { sender: "Divya S.", text: "Normalization is hurting my brain. What is the main differentiator between 3NF and BCNF?", time: "09:30" },
-                { sender: "Rohan G.", text: "BCNF is stronger. It does not allow dependencies where a non-prime attribute determines a part of the primary key.", time: "09:32" }
-            ],
-            os: [
-                { sender: "Vikram M.", text: "What is context switching overhead? Is it CPU time spent swapping registers?", time: "08:11" },
-                { sender: "Amit M.", text: "Exactly, it is purely kernel management overhead. No productive process instructions run during that time.", time: "08:14" }
-            ]
+            algorithms: [],
+            dbms: [],
+            os: []
         };
 
         const activeBotResponses = {
-            algorithms: [
-                "Make sure to practice writing balanced BST algorithms on paper, it really helps in judging!",
-                "Has anyone completed the Data Structures AI Quiz today? Got 4/5, that last question was tricky.",
-                "Let's schedule a study challenge tonight! Target: Complete 3 tasks.",
-                "Big O notation is all about worst-case asymptotic upper bounds."
-            ],
-            dbms: [
-                "Do not forget to define primary keys for all tables before setting up Supabase relations.",
-                "Inner join returns only intersecting records. Left join returns everything from the left plus matching right records.",
-                "Transaction rollbacks use the undo logs. ACID properties guarantee consistency!"
-            ],
-            os: [
-                "Deadlocks require mutual exclusion, hold & wait, no preemption, and circular wait. Break any one to prevent it!",
-                "Paging solves external fragmentation by using fixed-size blocks called frames in physical memory.",
-                "Semaphores use wait() and signal() operations to maintain mutual exclusion in processes."
-            ]
+            algorithms: [],
+            dbms: [],
+            os: []
         };
 
         // Join Custom Room Click
@@ -1403,7 +1380,6 @@ window.StudySyncUI = {
                 chatPanel.classList.remove('hide');
                 leaderboardCard.classList.add('hide'); // collapse leaderboard
                 
-                if (activeRoomBotInterval) clearInterval(activeRoomBotInterval);
                 if (chatPollInterval) clearInterval(chatPollInterval);
                 renderedMessageIds.clear();
                 
@@ -1432,11 +1408,6 @@ window.StudySyncUI = {
                 
                 fetchAndRenderMessages();
                 chatPollInterval = setInterval(fetchAndRenderMessages, 2000);
-                
-                // Always start mock bot conversation loop to keep room active
-                activeRoomBotInterval = setInterval(() => {
-                    triggerMockBotResponse("algorithms");
-                }, 15000); // bots talk slightly slower in private rooms
             });
         }
 
@@ -1452,8 +1423,7 @@ window.StudySyncUI = {
                 chatPanel.classList.remove('hide');
                 leaderboardCard.classList.add('hide'); // collapse leaderboard to make room
                 
-                // Clear active bot loop and chat poll
-                if (activeRoomBotInterval) clearInterval(activeRoomBotInterval);
+                // Clear active chat poll
                 if (chatPollInterval) clearInterval(chatPollInterval);
                 renderedMessageIds.clear();
                 
@@ -1481,11 +1451,6 @@ window.StudySyncUI = {
                 
                 fetchAndRenderMessages();
                 chatPollInterval = setInterval(fetchAndRenderMessages, 2000);
-                
-                // Always start mock bot conversation loop to keep room active for presentation
-                activeRoomBotInterval = setInterval(() => {
-                    triggerMockBotResponse(roomId);
-                }, 12000); // bot sends a message every 12 seconds
             });
         });
 
@@ -1494,7 +1459,6 @@ window.StudySyncUI = {
             closeChatBtn.addEventListener('click', () => {
                 chatPanel.classList.add('hide');
                 leaderboardCard.classList.remove('hide');
-                if (activeRoomBotInterval) clearInterval(activeRoomBotInterval);
                 if (chatPollInterval) clearInterval(chatPollInterval);
                 renderedMessageIds.clear();
             });
@@ -1552,25 +1516,8 @@ window.StudySyncUI = {
                     .catch(err => {
                         console.error("Error sending message", err);
                     });
-                
-                // Always trigger bot response quickly to reply to user
-                setTimeout(() => {
-                    triggerMockBotResponse(activeRoom);
-                }, 1800);
             });
         }
-
-        const triggerMockBotResponse = (roomId) => {
-            const responses = activeRoomBotInterval ? activeBotResponses[roomId] : [];
-            if (!responses || responses.length === 0) return;
-            
-            const randomMsg = responses[Math.floor(Math.random() * responses.length)];
-            const members = ["Amit M.", "Sneha P.", "Divya S.", "Rohan G.", "Vikram M."];
-            const randomMember = members[Math.floor(Math.random() * members.length)];
-            
-            // Append
-            appendBubble(randomMember, randomMsg);
-        };
     },
 
     // --- PROFILE PAGE & ACHIEVEMENT SHOP ---
