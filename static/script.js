@@ -6,6 +6,7 @@
 let userProfile = null;
 let activeRoomBotInterval = null;
 let activeChatChannel = null;
+const chatSessionId = 'session-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
 
 window.StudySyncUI = {
     // --- INITIALIZATION ---
@@ -1340,8 +1341,8 @@ window.StudySyncUI = {
                     
                     activeChatChannel
                         .on('broadcast', { event: 'message' }, ({ payload }) => {
-                            if (payload.senderId !== myName) {
-                                appendBubble(payload.sender, payload.text, payload.senderId === "system");
+                            if (payload.clientSessionId !== chatSessionId) {
+                                appendBubble(payload.sender, payload.text, payload.clientSessionId === "system");
                             }
                         })
                         .subscribe((status) => {
@@ -1349,7 +1350,7 @@ window.StudySyncUI = {
                                 activeChatChannel.send({
                                     type: 'broadcast',
                                     event: 'message',
-                                    payload: { sender: "System", senderId: "system", text: `${myName} joined the private room.` }
+                                    payload: { sender: "System", clientSessionId: "system", text: `${myName} joined the private room.` }
                                 });
                             }
                         });
@@ -1397,8 +1398,8 @@ window.StudySyncUI = {
                     
                     activeChatChannel
                         .on('broadcast', { event: 'message' }, ({ payload }) => {
-                            if (payload.senderId !== myName) {
-                                appendBubble(payload.sender, payload.text, payload.senderId === "system");
+                            if (payload.clientSessionId !== chatSessionId) {
+                                appendBubble(payload.sender, payload.text, payload.clientSessionId === "system");
                             }
                         })
                         .subscribe((status) => {
@@ -1406,7 +1407,7 @@ window.StudySyncUI = {
                                 activeChatChannel.send({
                                     type: 'broadcast',
                                     event: 'message',
-                                    payload: { sender: "System", senderId: "system", text: `${myName} joined the study room.` }
+                                    payload: { sender: "System", clientSessionId: "system", text: `${myName} joined the study room.` }
                                 });
                             }
                         });
@@ -1482,7 +1483,7 @@ window.StudySyncUI = {
                     activeChatChannel.send({
                         type: 'broadcast',
                         event: 'message',
-                        payload: { sender: myName, senderId: myName, text: text }
+                        payload: { sender: myName, clientSessionId: chatSessionId, text: text }
                     });
                 }
                 
