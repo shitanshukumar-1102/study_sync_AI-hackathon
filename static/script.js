@@ -32,6 +32,16 @@ window.StudySyncUI = {
         if (window.lucide) {
             window.lucide.createIcons();
         }
+
+        // Global click listener for satisfying UI button/link sound effects
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('button, .nav-link, .mobile-nav-link, .quiz-option, .task-checkbox-btn');
+            if (target) {
+                // If it is a task check button, we will play the task sound separately inside the task handler.
+                if (target.classList.contains('task-checkbox-btn')) return;
+                this.playAudioSynth('click');
+            }
+        });
     },
 
     // --- THEME SWITCHER (LIGHT / DARK) ---
@@ -51,6 +61,106 @@ window.StudySyncUI = {
                 
                 this.showToast(`Switched to ${newTheme} mode`, "info");
             });
+        }
+    },
+
+    // --- PLAY RETRO SYNTH AUDIO ---
+    playAudioSynth: function(type) {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            if (type === 'click') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.06);
+            } else if (type === 'task') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.12); // G5
+                
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else if (type === 'chat') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } else if (type === 'correct') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
+                osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.1); // A5
+                
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            } else if (type === 'incorrect') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(90, ctx.currentTime + 0.3);
+                
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else if (type === 'fanfare') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                const now = ctx.currentTime;
+                osc.frequency.setValueAtTime(261.63, now); // C4
+                osc.frequency.setValueAtTime(329.63, now + 0.08); // E4
+                osc.frequency.setValueAtTime(392.00, now + 0.16); // G4
+                osc.frequency.setValueAtTime(523.25, now + 0.24); // C5
+                
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                
+                osc.start();
+                osc.stop(now + 0.55);
+            }
+        } catch (e) {
+            console.warn("AudioContext block:", e);
         }
     },
 
@@ -375,6 +485,7 @@ window.StudySyncUI = {
                             const res = await window.StudySyncAPI.updateTask(id, nowCompleted);
                             if (res.success) {
                                 if (nowCompleted) {
+                                    this.playAudioSynth('task');
                                     this.showToast(`Completed! Earned +${res.rewards.xp} XP and +${res.rewards.coins} Coins`, "success");
                                     if (res.rewards.challenge_completed) {
                                         this.showAchievement("Daily Quest Complete!", "You checked off a daily target challenge", 50, 10);
@@ -775,9 +886,11 @@ window.StudySyncUI = {
                             if (isCorrect) {
                                 score++;
                                 optDiv.classList.add('correct');
+                                this.playAudioSynth('correct');
                                 this.showToast("Correct choice!", "success");
                             } else {
                                 optDiv.classList.add('incorrect');
+                                this.playAudioSynth('incorrect');
                                 // highlight correct one
                                 optionsBox.children[q.correct_idx].classList.add('correct');
                                 this.showToast("Incorrect selection.", "error");
@@ -1393,13 +1506,20 @@ window.StudySyncUI = {
                     try {
                         const res = await window.StudySyncAPI.getChatMessages(roomCode);
                         if (res.success && res.messages) {
+                            let hasNewPeerMessage = false;
                             res.messages.forEach(msg => {
                                 if (!renderedMessageIds.has(msg.id)) {
                                     renderedMessageIds.add(msg.id);
                                     const isMe = msg.sender_id === (userProfile && (userProfile.id || userProfile.user_id) || "");
                                     appendBubble(isMe ? "You" : msg.sender, msg.text, msg.sender === "System");
+                                    if (!isMe && msg.sender !== "System") {
+                                        hasNewPeerMessage = true;
+                                    }
                                 }
                             });
+                            if (hasNewPeerMessage) {
+                                this.playAudioSynth('chat');
+                            }
                         }
                     } catch(err) {
                         console.error("Error fetching chat messages", err);
@@ -1436,13 +1556,20 @@ window.StudySyncUI = {
                     try {
                         const res = await window.StudySyncAPI.getChatMessages(roomId);
                         if (res.success && res.messages) {
+                            let hasNewPeerMessage = false;
                             res.messages.forEach(msg => {
                                 if (!renderedMessageIds.has(msg.id)) {
                                     renderedMessageIds.add(msg.id);
                                     const isMe = msg.sender_id === (userProfile && (userProfile.id || userProfile.user_id) || "");
                                     appendBubble(isMe ? "You" : msg.sender, msg.text, msg.sender === "System");
+                                    if (!isMe && msg.sender !== "System") {
+                                        hasNewPeerMessage = true;
+                                    }
                                 }
                             });
+                            if (hasNewPeerMessage) {
+                                this.playAudioSynth('chat');
+                            }
                         }
                     } catch(err) {
                         console.error("Error fetching chat messages", err);
@@ -1591,6 +1718,7 @@ window.StudySyncUI = {
 
     // --- GLOBAL POPUP SYSTEM ---
     showAchievement: function(title, desc, xpReward = 0, coinsReward = 0) {
+        this.playAudioSynth('fanfare');
         const popup = document.getElementById('achievement-popup');
         if (!popup) return;
 
