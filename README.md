@@ -1,51 +1,51 @@
-# StudySync AI – Smart Student Productivity Platform
+# StudySync AI - Smart Student Productivity Platform
 
-StudySync AI is a gamified productivity platform built to help students manage assignments, track study schedules, generate notes summaries, and test their skills with custom quizzes. 
+StudySync AI is a gamified productivity application designed to help students track tasks, organize study schedules, generate notes summaries, and take custom practice quizzes.
 
-The application utilizes a glassmorphic dark-theme user interface running on a Python Flask backend. It connects to Google Gemini 1.5 Flash for notes summarization and quiz generation, and integrates Supabase for user auth and cloud database storage.
-
----
-
-## 🔥 Key Features
-
-- **Smart Task Checklist**: Organize study tasks by course category and priority level. Check off completed items to instantly earn XP and Coins.
-- **AI Summary Engine**: Input notes or topic keywords to receive structured summary sheets, quick revision bulletins, and key takeaways.
-- **AI MCQ Quizzer**: Auto-generate 5-question practice quizzes from notes. Get instant answer verification, score reports, and coins/XP rewards on completion.
-- **Quest & Streak tracker**: Maintain daily study streaks. Complete random daily quests to score extra coin rewards.
-- **Badge Showcase**: Buy custom badges in the shop using earned coins and display them on your academic profile page.
-- **Dynamic Leaderboard**: See real-time standings of all registered students sorted by total XP, highlighting your own position.
-- **Peer Chat Rooms**: Join custom study spaces to chat with classmates in real-time. No bots, just peer-to-peer collaboration.
-- **Web Audio Sound Effects**: Custom synthesized 8-bit sounds that trigger on button clicks, task completions, quiz grades, chat arrivals, and quest unlocks.
+The platform uses a dark-theme glassmorphism interface running on a Python Flask backend. It integrates Google Gemini 1.5 Flash for notes summarization and quiz generation, and connects to Supabase for authentication and SQL cloud storage.
 
 ---
 
-## 🛠️ Tech Stack & Architecture Updates
+## Key Features
 
-### 1. Flask-Based Chat Syncing
-Instead of relying on fragile client-side real-time listeners or WebSockets (which often drop connections or hit rate limits on free hosting plans like Render), the chat system runs on a lightweight polling architecture:
-- Messages are processed and synchronized through backend routes (`/api/chat/messages` and `/api/chat/send`).
-- A message ID deduplication set on the frontend prevents duplicate bubble rendering.
-- Guaranteed real-time delivery across multiple browser windows or devices.
+- Smart Task Checklist: Organize assignments and study tasks by course category and priority level. Checking off completed items awards XP and Coins instantly.
+- AI Summary Engine: Input study notes or topic keywords to generate formatted summary sheets, quick revision bulletins, and key takeaways.
+- AI MCQ Quizzer: Generates a 5-question practice quiz based on notes. Includes instant answer verification, score reports, and coins/XP rewards.
+- Quest and Streak Tracker: Tracks consecutive daily login streaks. Includes randomized daily challenges for extra coin rewards.
+- Badge Showcase: Purchase custom profile badges from the shop using earned coins to display them on your academic profile.
+- Live Leaderboard: Displays real-time standings of all registered students sorted by total XP, highlighting your own rank.
+- Study Group Chat: Custom rooms where classmates can join and chat in real-time to collaborate.
+- Synth Sound Effects: Synthesized 8-bit sound effects that trigger on clicks, task completions, quiz answers, chat notifications, and quest unlocks.
 
-### 2. Live Leaderboard System
-The leaderboard is populated dynamically from database statistics (`/api/leaderboard`):
+---
+
+## Architecture and System Updates
+
+### Server-Side Chat Synchronization
+To address connection drops and rate limits commonly experienced with WebSockets on free-tier hosting (such as Render), the chat system runs on a polling architecture:
+- Messages are processed and synchronized through Flask API routes (/api/chat/messages and /api/chat/send).
+- A message ID deduplication set on the client prevents duplicate bubble rendering.
+- This ensures real-time delivery across multiple browser windows or devices.
+
+### Live Leaderboard System
+The leaderboard is populated dynamically from database statistics using the /api/leaderboard route:
 - Standings are fetched, sorted, and rendered on the client side.
-- Highlights your row with special styles and appends a `(You)` label to help you find your rank instantly.
+- Highlights your row with special styles and appends a (You) label to help you find your rank instantly.
 
-### 3. Web Audio API Synthesizer
-Rather than loading heavy audio assets (MP3s/WAVs) that slow down page loads, we use the browser's built-in `AudioContext` to synthesize sound effects dynamically:
+### Web Audio API Synthesizer
+Rather than loading heavy audio files (MP3/WAV) that slow down page loads, we use the browser's built-in AudioContext to synthesize sound effects dynamically:
 - Short frequency burst on clicking navigation links and buttons.
 - A rising C5-to-G5 tone on task completion.
 - A soft bubble-pop sound on incoming chat messages.
 - Clean double-chimes for correct quiz answers and descending sweep for incorrect ones.
 - Triumphant fanfare arpeggio on leveling up or claiming rewards.
 
-### 4. Cache-Busting Imports
-All templates load JS static scripts with a version query parameter (`script.js?v=3`). This forces client browsers to fetch the latest code updates immediately, skipping cached files.
+### Cache-Busting Imports
+All templates load JS static scripts with a version query parameter (script.js?v=3). This forces client browsers to fetch the latest code updates immediately, skipping cached files.
 
 ---
 
-## 📁 File Directory
+## Folder Structure
 
 ```text
 StudySync-AI/
@@ -54,7 +54,7 @@ StudySync-AI/
 ├── gemini.py               # Gemini API connector (includes structured fallback data)
 ├── requirements.txt        # Backend dependencies
 ├── README.md               # Documentation and setup instructions
-├── templates/              # Jinja2 HTML layout views
+├── templates/              # HTML templates
 │   ├── index.html          # Portal landing and user registration
 │   ├── dashboard.html      # Study cockpit, timers, and AI generators
 │   ├── challenges.html     # Leaderboards and peer study chats
@@ -68,12 +68,12 @@ StudySync-AI/
 
 ---
 
-## 💻 Local Installation & Setup
+## Local Installation and Setup
 
-1. **Clone the Repository** and open the project directory in your terminal.
-2. **Create a Virtual Environment & Install Dependencies**:
+1. Clone the repository and navigate into the root directory in your terminal.
+2. Create a virtual environment and install dependencies:
    ```powershell
-   # Setup environment
+   # Create environment
    python -m venv venv
    
    # Activate environment (Windows)
@@ -82,19 +82,19 @@ StudySync-AI/
    # Install backend packages
    pip install -r requirements.txt
    ```
-3. **Configure Environment Secrets**:
-   Copy `.env.example` to a new file named `.env` and fill out the values:
+3. Configure environment secrets:
+   Copy .env.example to a new file named .env and fill out the values:
    ```bash
    FLASK_SECRET_KEY="your-random-cookie-key"
    SUPABASE_URL="https://your-supabase-project.supabase.co"
    SUPABASE_ANON_KEY="your-supabase-public-anon-key"
    GEMINI_API_KEY="your-google-studio-api-key"
    ```
-   *Note: If you leave the credentials empty, the app falls back to Mock Mode. It will initialize a local SQLite file (`studysync.db`) and serve simulated AI summaries/quizzes so you can test the platform instantly.*
+   *Note: If you leave the credentials empty, the app falls back to Mock Mode. It will initialize a local SQLite file (studysync.db) and serve simulated AI summaries/quizzes so you can test the platform instantly.*
 
 ---
 
-## ⚡ SQL Database Schema
+## SQL Database Schema
 
 Run this SQL script in your Supabase SQL Editor or apply it to your database to set up the schema:
 
@@ -147,13 +147,13 @@ CREATE TABLE public.challenges (
 
 ---
 
-## 🚀 Deployment Guide
+## Deployment Guide
 
 ### Render (Backend Hosting)
 1. Push the code to a GitHub repository.
-2. Create a new **Web Service** on Render, and link the repository.
+2. Create a new Web Service on Render, and link the repository.
 3. Configure these build settings:
-   - **Environment**: `Python`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
-4. Go to the **Environment** tab on Render and paste the environment variables from your `.env` file.
+   - Environment: Python
+   - Build Command: pip install -r requirements.txt
+   - Start Command: gunicorn app:app
+4. Go to the Environment tab on Render and paste the environment variables from your .env file.
