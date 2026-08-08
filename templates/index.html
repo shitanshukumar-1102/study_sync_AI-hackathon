@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySync AI – Smart Student Productivity Platform</title>
+    <meta name="description" content="Boost your study productivity, generate AI summaries and quizzes, track tasks, earn coins and badges, and compete with peers using StudySync AI.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i data-lucide="sparkles" class="logo-icon animate-pulse"></i>
+                <span>StudySync <span class="accent-text">AI</span></span>
+            </a>
+            
+            <nav class="nav-menu">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#about" class="nav-link">Gamification</a>
+                <a href="#tech" class="nav-link">Tech Stack</a>
+            </nav>
+
+            <div class="nav-actions">
+                <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+                <button class="btn btn-outline" id="btn-login-trigger">Log In</button>
+                <button class="btn btn-primary" id="btn-signup-trigger">Get Started</button>
+            </div>
+            
+            <button class="mobile-nav-toggle btn-icon" id="mobile-menu-btn" aria-label="Open navigation menu">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Dropdown Menu -->
+        <div class="mobile-nav-menu" id="mobile-menu">
+            <a href="#features" class="mobile-nav-link">Features</a>
+            <a href="#about" class="mobile-nav-link">Gamification</a>
+            <a href="#tech" class="mobile-nav-link">Tech Stack</a>
+            <hr class="mobile-divider">
+            <button class="btn btn-outline w-full" id="mobile-login-trigger">Log In</button>
+            <button class="btn btn-primary w-full mt-2" id="mobile-signup-trigger">Get Started</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="landing-main">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-bg-glow"></div>
+            <div class="hero-content">
+                <div class="hero-badge animate-float">
+                    <i data-lucide="trophy" class="badge-icon"></i>
+                    <span>Gamified AI Study Assistant</span>
+                </div>
+                <h1 class="hero-title">
+                    Master Your Studies With <br>
+                    <span class="gradient-text">AI-Powered Productivity</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Organize your schedule, auto-generate summaries and quizzes from notes, complete challenges, and level up your academic performance. Built for modern students.
+                </p>
+                <div class="hero-ctas">
+                    <button class="btn btn-primary btn-lg" id="hero-get-started">Start Studying Free</button>
+                    <a href="#features" class="btn btn-secondary btn-lg">Explore Features</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid Section -->
+        <section id="features" class="features-section">
+            <div class="section-header">
+                <h2 class="section-title">Everything You Need To Excel</h2>
+                <p class="section-subtitle">StudySync AI integrates smart automation and gaming mechanics into a cohesive platform.</p>
+            </div>
+            
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper f-blue">
+                        <i data-lucide="check-square" class="feature-icon"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Task Manager</h3>
+                    <p class="feature-desc">Track tasks with priorities, categorizations, and target due dates. Earn direct XP and coins on completion.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper f-purple">
+                        <i data-lucide="file-text" class="feature-icon"></i>
+                    </div>
+                    <h3 class="feature-title">AI Summarization</h3>
+                    <p class="feature-desc">Upload study materials (PDFs, notes) or input topic keywords. Get detailed summaries, revision bullet points, and notes.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper f-indigo">
+                        <i data-lucide="help-circle" class="feature-icon"></i>
+                    </div>
+                    <h3 class="feature-title">AI Practice Quizzes</h3>
+                    <p class="feature-desc">Auto-generate custom 5-question multiple-choice quizzes with options, instant feedback, and grading to reinforce learning.</p>
+                </div>
+                <!-- Feature 4 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper f-gold">
+                        <i data-lucide="swatchbook" class="feature-icon"></i>
+                    </div>
+                    <h3 class="feature-title">Gamified Daily Quests</h3>
+                    <p class="feature-desc">Maintain daily streaks, conquer progress goals, unlock levels, buy badges with coins, and climb the platform leaderboard.</p>
+                </div>
+                <!-- Feature 5 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper f-cyan">
+                        <i data-lucide="users" class="feature-icon"></i>
+                    </div>
+                    <h3 class="feature-title">Peer Study Groups</h3>
+                    <p class="feature-desc">Join study spaces, simulate team challenges, check status updates, and participate in collaborative learning channels.</p>
+                </div>
+                <!-- Feature 6 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper f-pink">
+                        <i data-lucide="bar-chart-2" class="feature-icon"></i>
+                    </div>
+                    <h3 class="feature-title">Visual Productivity Analytics</h3>
+                    <p class="feature-desc">Track your learning velocity, study times, level increases, and quest completion rates in structured charts.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Showcase Section -->
+        <section id="about" class="showcase-section">
+            <div class="showcase-container">
+                <div class="showcase-content">
+                    <div class="showcase-badge">STAY MOTIVATED</div>
+                    <h2 class="showcase-title">Rewarding Academic Progress</h2>
+                    <p class="showcase-desc">
+                        Our research-backed platform incorporates elements of gamification. By rewarding daily completions, maintaining streaks, and providing instant feedback, we keep students engaged and reduce procrastination.
+                    </p>
+                    <ul class="showcase-list">
+                        <li>
+                            <i data-lucide="zap" class="list-icon"></i>
+                            <span><strong>XP Accumulation:</strong> Earn points on task checklists, study hours, and quizzes to level up your rank.</span>
+                        </li>
+                        <li>
+                            <i data-lucide="coins" class="list-icon text-gold"></i>
+                            <span><strong>Coin Rewards:</strong> Earn gold coins to customize your profile, purchase badge items, and show achievements.</span>
+                        </li>
+                        <li>
+                            <i data-lucide="calendar" class="list-icon"></i>
+                            <span><strong>Streak Tracking:</strong> Build study routines. Logging in and revising daily keeps your active streak multiplier alive.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="showcase-visual">
+                    <div class="floating-badge-card card-xp">
+                        <div class="badge-ring">
+                            <span class="badge-number">+150 XP</span>
+                        </div>
+                        <p>Daily Challenge Completed</p>
+                    </div>
+                    <div class="floating-badge-card card-badge animate-float">
+                        <i data-lucide="shield-check" class="badge-shield"></i>
+                        <p>Master of Database Systems</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="/" class="logo">
+                    <i data-lucide="sparkles" class="logo-icon"></i>
+                    <span>StudySync AI</span>
+                </a>
+                <p>Smart Student Productivity Platform. Hackathon submission. Built with Python Flask, Supabase & Gemini AI.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Hackathon Core</h4>
+                <a href="/login">Test Credentials</a>
+                <a href="#features">Features</a>
+                <a href="https://github.com" target="_blank">Repository</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 StudySync AI. Open Source Project.</p>
+        </div>
+    </footer>
+
+    <!-- AUTH MODAL SYSTEM -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-card">
+            <button class="modal-close" id="modal-close-btn" aria-label="Close modal">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <!-- Tab Headers -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login">Log In</button>
+                <button class="auth-tab" id="tab-signup">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <div class="auth-form-container active" id="form-login-wrapper">
+                <h3 class="auth-title">Welcome Back</h3>
+                <p class="auth-subtitle">Sign in to resume your study streak and earn XP.</p>
+                <form id="form-login">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" required placeholder="name@university.edu">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <div class="form-group row justify-between">
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> Remember me
+                        </label>
+                        <a href="#" class="forgot-link" id="forgot-password-btn">Forgot Password?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full mt-4" id="login-submit-btn">
+                        <span class="btn-text">Sign In</span>
+                        <div class="spinner hide"></div>
+                    </button>
+                    <button type="button" class="btn btn-secondary w-full mt-2" id="btn-quick-demo-login" style="background: rgba(147, 51, 234, 0.15); border: 1px solid var(--accent-color); color: var(--accent-light);">
+                        <i data-lucide="zap" style="width: 14px; height: 14px; margin-right: 6px; display: inline-block; vertical-align: middle;"></i>
+                        <span>Instant Demo Login (Hackathon Judge)</span>
+                    </button>
+                </form>
+                
+                <div class="demo-account-info">
+                    <strong>Demo Mode Account:</strong>
+                    <p>Don't want to create an account? Just click the <b>Sign Up</b> tab, enter mock details, and it will automatically generate your workspace instantly!</p>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="auth-form-container" id="form-signup-wrapper">
+                <h3 class="auth-title">Create Student Workspace</h3>
+                <p class="auth-subtitle">Join StudySync, track tasks, and unlock AI features.</p>
+                
+                <form id="form-signup">
+                    <div class="form-scrollable">
+                        <div class="form-group">
+                            <label for="signup-fullname">Full Name</label>
+                            <input type="text" id="signup-fullname" required placeholder="Jane Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-email">Email Address</label>
+                            <input type="email" id="signup-email" required placeholder="jane.doe@university.edu">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-password">Password</label>
+                            <input type="password" id="signup-password" required placeholder="Min 6 characters">
+                        </div>
+                        
+                        <div class="form-divider">Academic Details</div>
+                        
+                        <div class="form-group">
+                            <label for="signup-college">College / University</label>
+                            <input type="text" id="signup-college" required placeholder="Stanford University">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-course">Degree Course / Major</label>
+                            <input type="text" id="signup-course" required placeholder="B.S. Computer Science">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-semester">Year & Semester</label>
+                            <input type="text" id="signup-semester" required placeholder="Year 2, Semester 3">
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-subjects">Core Subjects (Comma separated)</label>
+                            <input type="text" id="signup-subjects" required placeholder="Data Structures, DBMS, Operating Systems">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-full mt-4" id="signup-submit-btn">
+                        <span class="btn-text">Register & Initialize</span>
+                        <div class="spinner hide"></div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Global Javascript Config -->
+    <script>
+        // Check if Flask requested to open specific modal
+        const initialOpenModal = "{{ open_modal or '' }}";
+    </script>
+    <script src="{{ url_for('static', filename='auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='api.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile – StudySync AI</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="logo">
+                <i data-lucide="sparkles" class="logo-icon"></i>
+                <span>StudySync <span class="accent-text">AI</span></span>
+            </a>
+            
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/challenges" class="nav-link">Daily Challenges</a>
+                <a href="/profile" class="nav-link active">My Profile</a>
+            </nav>
+
+            <div class="nav-actions">
+                <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+                
+                <div class="nav-stat" title="Current Daily Streak">
+                    <i data-lucide="zap" class="stat-icon text-orange"></i>
+                    <span id="nav-streak">{{ user.streak }}</span>
+                </div>
+                <div class="nav-stat" title="Gold Coins">
+                    <i data-lucide="coins" class="stat-icon text-gold"></i>
+                    <span id="nav-coins">{{ user.coins }}</span>
+                </div>
+                
+                <a href="/logout" class="btn btn-outline" id="btn-logout">Log Out</a>
+            </div>
+            
+            <button class="mobile-nav-toggle btn-icon" id="mobile-menu-btn" aria-label="Open navigation menu">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Dropdown Menu -->
+        <div class="mobile-nav-menu" id="mobile-menu">
+            <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
+            <a href="/challenges" class="mobile-nav-link">Daily Challenges</a>
+            <a href="/profile" class="mobile-nav-link active">My Profile</a>
+            <hr class="mobile-divider">
+            <div class="mobile-stats-row">
+                <div class="mobile-stat">
+                    <i data-lucide="zap" class="text-orange"></i> Streak: {{ user.streak }}
+                </div>
+                <div class="mobile-stat">
+                    <i data-lucide="coins" class="text-gold"></i> Coins: {{ user.coins }}
+                </div>
+            </div>
+            <a href="/logout" class="btn btn-outline w-full mt-2">Log Out</a>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Section Title -->
+        <section class="dashboard-welcome">
+            <div class="welcome-left">
+                <h1 class="welcome-title">Student Profile Hub 🎓</h1>
+                <p class="welcome-motivation">Manage your credentials, inspect achievements, and unlock premium profile items.</p>
+            </div>
+        </section>
+
+        <!-- Main Layout Grid -->
+        <div class="profile-grid">
+            
+            <!-- Left Column: Academic info & Stats -->
+            <div class="profile-left">
+                <!-- Academic Card -->
+                <div class="card card-academic">
+                    <div class="card-header">
+                        <i data-lucide="graduation-cap" class="card-icon text-blue"></i>
+                        <h2>Academic Identity</h2>
+                    </div>
+                    <div class="profile-details-list">
+                        <div class="profile-detail-row">
+                            <span class="detail-label">Full Name</span>
+                            <span class="detail-val" id="profile-name">{{ user.full_name }}</span>
+                        </div>
+                        <div class="profile-detail-row">
+                            <span class="detail-label">Email Address</span>
+                            <span class="detail-val" id="profile-email">{{ user.email }}</span>
+                        </div>
+                        <div class="profile-detail-row">
+                            <span class="detail-label">College / University</span>
+                            <span class="detail-val" id="profile-college">{{ user.college or "Not Specified" }}</span>
+                        </div>
+                        <div class="profile-detail-row">
+                            <span class="detail-label">Registered Course</span>
+                            <span class="detail-val" id="profile-course">{{ user.course or "Not Specified" }}</span>
+                        </div>
+                        <div class="profile-detail-row">
+                            <span class="detail-label">Current Semester</span>
+                            <span class="detail-val" id="profile-semester">{{ user.year_semester or "Not Specified" }}</span>
+                        </div>
+                        <div class="profile-detail-row">
+                            <span class="detail-label">Active Subjects</span>
+                            <div class="profile-subjects-tags" id="profile-subjects">
+                                {% if user.subjects %}
+                                    {% for subject in user.subjects.split(',') %}
+                                        <span class="subject-tag">{{ subject.strip() }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="no-subject-text">No subjects added.</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Career Stats Cards Grid -->
+                <div class="stats-counter-grid mt-6">
+                    <div class="stat-counter-card card-purple">
+                        <i data-lucide="sparkles" class="stat-count-icon"></i>
+                        <span class="stat-count-number" id="stats-xp">{{ user.xp }}</span>
+                        <span class="stat-count-label">Total XP Accumulation</span>
+                    </div>
+
+                    <div class="stat-counter-card card-cyan">
+                        <i data-lucide="zap" class="stat-count-icon"></i>
+                        <span class="stat-count-number" id="stats-streak">{{ user.streak }}</span>
+                        <span class="stat-count-label">Daily Study Streak</span>
+                    </div>
+
+                    <div class="stat-counter-card card-gold">
+                        <i data-lucide="coins" class="stat-count-icon"></i>
+                        <span class="stat-count-number" id="stats-coins">{{ user.coins }}</span>
+                        <span class="stat-count-label">Gold Coins Earned</span>
+                    </div>
+                    
+                    <div class="stat-counter-card card-pink">
+                        <i data-lucide="shield" class="stat-count-icon"></i>
+                        <span class="stat-count-number" id="stats-level">{{ user.level }}</span>
+                        <span class="stat-count-label">Platform Level Rank</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Badge shop & Accomplishments -->
+            <div class="profile-right">
+                
+                <!-- Gamification Badges Shop -->
+                <div class="card card-badge-shop">
+                    <div class="card-header justify-between">
+                        <div class="header-title-group">
+                            <i data-lucide="award" class="card-icon text-pink"></i>
+                            <h2>Achievements Store & Badges</h2>
+                        </div>
+                        <div class="coins-balance">
+                            <i data-lucide="coins" class="text-gold"></i>
+                            <span id="shop-coins-balance">{{ user.coins }}</span>
+                        </div>
+                    </div>
+                    <p class="card-subtitle">Redeem your hard-earned gold coins to unlock premium badges to showcase on your profile.</p>
+
+                    <div class="badge-shop-grid" id="badge-shop-container">
+                        <!-- Badge 1: Starter -->
+                        <div class="badge-item unlocked" data-badge-id="freshman">
+                            <div class="badge-visual bg-gradient-blue text-white">
+                                <i data-lucide="sparkles"></i>
+                            </div>
+                            <div class="badge-info">
+                                <h3>Freshman Pioneer</h3>
+                                <p>Unlocked on initializing your workspace.</p>
+                                <span class="badge-status-text">Unlocked</span>
+                            </div>
+                        </div>
+
+                        <!-- Badge 2: Quiz Master (XP requirement) -->
+                        <div class="badge-item unlocked-conditional" id="badge-focus-champion" data-badge-id="focus_champion">
+                            <div class="badge-visual bg-gradient-purple text-white">
+                                <i data-lucide="flame"></i>
+                            </div>
+                            <div class="badge-info">
+                                <h3>Focus Champion</h3>
+                                <p>Reaches Level 2 or 500 XP to activate.</p>
+                                <span class="badge-status-text" id="status-focus">Locked</span>
+                            </div>
+                        </div>
+
+                        <!-- Badge 3: DBMS wizard (purchasable: 20 coins) -->
+                        <div class="badge-item shop-badge locked" id="badge-dbms-wizard" data-badge-id="dbms_wizard" data-price="20">
+                            <div class="badge-visual bg-gradient-cyan text-white">
+                                <i data-lucide="database"></i>
+                            </div>
+                            <div class="badge-info">
+                                <h3>DBMS Query Wizard</h3>
+                                <p>Master relational locks & normalizations.</p>
+                                <button class="btn btn-primary btn-xs btn-buy-badge" data-badge="dbms_wizard" data-price="20">
+                                    <i data-lucide="shopping-cart"></i> Buy for 20 Coins
+                                </button>
+                                <span class="badge-status-text hide">Unlocked</span>
+                            </div>
+                        </div>
+
+                        <!-- Badge 4: Algorithm Slayer (purchasable: 40 coins) -->
+                        <div class="badge-item shop-badge locked" id="badge-algo-slayer" data-badge-id="algo_slayer" data-price="40">
+                            <div class="badge-visual bg-gradient-pink text-white">
+                                <i data-lucide="code-2"></i>
+                            </div>
+                            <div class="badge-info">
+                                <h3>Algorithm Slayer</h3>
+                                <p>Complete binary trees and time complexities.</p>
+                                <button class="btn btn-primary btn-xs btn-buy-badge" data-badge="algo_slayer" data-price="40">
+                                    <i data-lucide="shopping-cart"></i> Buy for 40 Coins
+                                </button>
+                                <span class="badge-status-text hide">Unlocked</span>
+                            </div>
+                        </div>
+
+                        <!-- Badge 5: Streak Legend (purchasable: 80 coins) -->
+                        <div class="badge-item shop-badge locked" id="badge-streak-legend" data-badge-id="streak_legend" data-price="80">
+                            <div class="badge-visual bg-gradient-gold text-white">
+                                <i data-lucide="shield-alert"></i>
+                            </div>
+                            <div class="badge-info">
+                                <h3>Streak Overlord</h3>
+                                <p>The ultimate badge of study consistency.</p>
+                                <button class="btn btn-primary btn-xs btn-buy-badge" data-badge="streak_legend" data-price="80">
+                                    <i data-lucide="shopping-cart"></i> Buy for 80 Coins
+                                </button>
+                                <span class="badge-status-text hide">Unlocked</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Achievements Alert Popup -->
+    <div class="achievement-popup-overlay hide" id="achievement-popup">
+        <div class="achievement-card">
+            <div class="confetti-glow"></div>
+            <i data-lucide="award" class="achievement-trophy animate-bounce"></i>
+            <h3 id="achievement-title">Badge Unlocked!</h3>
+            <p id="achievement-desc">Congratulations! You purchased a new achievement badge</p>
+            <div class="achievement-rewards">
+                <span class="reward-tag coin-tag"><i data-lucide="check"></i> Item Unlocked</span>
+            </div>
+            <button class="btn btn-primary" id="achievement-close-btn">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='api.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

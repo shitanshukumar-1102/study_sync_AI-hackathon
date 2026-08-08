@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – StudySync AI</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ChartJS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="logo">
+                <i data-lucide="sparkles" class="logo-icon animate-pulse"></i>
+                <span>StudySync <span class="accent-text">AI</span></span>
+            </a>
+            
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-link active">Dashboard</a>
+                <a href="/challenges" class="nav-link">Daily Challenges</a>
+                <a href="/profile" class="nav-link">My Profile</a>
+            </nav>
+
+            <div class="nav-actions">
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+                
+                <!-- User Quick Stats -->
+                <div class="nav-stat" title="Current Daily Streak">
+                    <i data-lucide="zap" class="stat-icon text-orange"></i>
+                    <span id="nav-streak">{{ user.streak }}</span>
+                </div>
+                <div class="nav-stat" title="Gold Coins">
+                    <i data-lucide="coins" class="stat-icon text-gold"></i>
+                    <span id="nav-coins">{{ user.coins }}</span>
+                </div>
+                
+                <a href="/logout" class="btn btn-outline" id="btn-logout">Log Out</a>
+            </div>
+            
+            <button class="mobile-nav-toggle btn-icon" id="mobile-menu-btn" aria-label="Open navigation menu">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Dropdown Menu -->
+        <div class="mobile-nav-menu" id="mobile-menu">
+            <a href="/dashboard" class="mobile-nav-link active">Dashboard</a>
+            <a href="/challenges" class="mobile-nav-link">Daily Challenges</a>
+            <a href="/profile" class="mobile-nav-link">My Profile</a>
+            <hr class="mobile-divider">
+            <div class="mobile-stats-row">
+                <div class="mobile-stat">
+                    <i data-lucide="zap" class="text-orange"></i> Streak: {{ user.streak }}
+                </div>
+                <div class="mobile-stat">
+                    <i data-lucide="coins" class="text-gold"></i> Coins: {{ user.coins }}
+                </div>
+            </div>
+            <a href="/logout" class="btn btn-outline w-full mt-2">Log Out</a>
+        </div>
+    </header>
+
+    <!-- Dashboard Layout Grid -->
+    <main class="dashboard-container">
+        <!-- Dashboard Header Row -->
+        <section class="dashboard-welcome">
+            <div class="welcome-left">
+                <h1 class="welcome-title">Welcome back, <span id="welcome-username">{{ user.full_name }}</span>! 👋</h1>
+                <p class="welcome-motivation" id="daily-quote">"Your limitation—it's only your imagination. Keep moving forward."</p>
+            </div>
+            
+            <!-- XP and LEVEL progress card -->
+            <div class="welcome-right level-progress-card">
+                <div class="level-badge">
+                    <span class="level-label">Level</span>
+                    <span class="level-number" id="user-level">{{ user.level }}</span>
+                </div>
+                <div class="progress-details">
+                    <div class="progress-labels">
+                        <span>XP Progress</span>
+                        <span id="xp-text">{{ user.xp }} / {{ user.level * 500 }} XP</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar" id="xp-progress-bar" style="width: {{ (user.xp / (user.level * 500)) * 100 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Cockpit Section -->
+        <div class="cockpit-grid">
+            <!-- Left Column: Tasks and Analytics -->
+            <div class="cockpit-left">
+                
+                <!-- Smart Task Manager -->
+                <div class="card card-tasks">
+                    <div class="card-header justify-between">
+                        <div class="header-title-group">
+                            <i data-lucide="check-square" class="card-icon text-blue"></i>
+                            <h2>Today's Focus Tasks</h2>
+                        </div>
+                        <span class="task-count-badge" id="task-completed-ratio">0/0 Completed</span>
+                    </div>
+                    
+                    <!-- Task Completion Progress -->
+                    <div class="task-progress-box">
+                        <div class="progress-track-sm">
+                            <div class="progress-bar-sm bg-gradient-blue" id="task-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Task List Container -->
+                    <div class="task-list-wrapper">
+                        <div class="task-list" id="task-list">
+                            <!-- Populated dynamically via JS -->
+                            <div class="empty-state">
+                                <p>No tasks remaining today. Add one below!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inline Add Task Form -->
+                    <form id="add-task-form" class="task-form mt-4">
+                        <input type="text" id="task-title" required placeholder="Add a focus task (e.g. Solve 5 Leetcode arrays)...">
+                        
+                        <div class="task-form-options">
+                            <select id="task-priority" title="Select Priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                            
+                            <select id="task-category" title="Select Category">
+                                <option value="Study" selected>Study</option>
+                                <option value="Assignment">Assignment</option>
+                                <option value="Revision">Revision</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            
+                            <input type="date" id="task-due" title="Select Due Date">
+                            
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i data-lucide="plus"></i> Add
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Pomodoro / Focus Study Timer -->
+                <div class="card card-timer mt-6">
+                    <div class="card-header justify-between">
+                        <div class="header-title-group">
+                            <i data-lucide="timer" class="card-icon text-orange" style="color:#f97316;"></i>
+                            <h2>Focus Study Session</h2>
+                        </div>
+                        <span class="timer-mode-badge" style="font-size: 0.8rem; font-weight:700; background-color: rgba(249, 115, 22, 0.1); color: #f97316; padding: 4px 10px; border-radius: var(--border-radius-sm);">Timer</span>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0;">
+                        <div id="focus-time-display" style="font-size: 3rem; font-weight: 800; font-family: monospace; margin-bottom: 16px; color: var(--text-heading);">25:00</div>
+                        
+                        <div style="display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%;">
+                            <button id="btn-start-focus" class="btn btn-primary btn-sm" style="flex: 1; max-width: 140px; background-color: #f97316; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.2); color:#fff; border:none;">
+                                <i data-lucide="play" style="width: 16px; height:16px;"></i> Start
+                            </button>
+                            <button id="btn-pause-focus" class="btn btn-secondary btn-sm hide" style="flex: 1; max-width: 140px;">
+                                <i data-lucide="pause" style="width: 16px; height:16px;"></i> Pause
+                            </button>
+                            <button id="btn-reset-focus" class="btn btn-secondary btn-sm" style="flex: 1; max-width: 140px;">
+                                <i data-lucide="refresh-cw" style="width: 16px; height:16px;"></i> Reset
+                            </button>
+                            <button id="btn-log-focus" class="btn btn-outline btn-sm hide" style="flex: 1; max-width: 140px; border-color: #f97316; color: #f97316;">
+                                <i data-lucide="save" style="width: 16px; height:16px;"></i> Log 10m
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Productivity Analytics Graph -->
+                <div class="card card-analytics">
+                    <div class="card-header">
+                        <i data-lucide="activity" class="card-icon text-cyan"></i>
+                        <h2>Study Metrics & Performance</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="productivityChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: AI Studies and Content Generator -->
+            <div class="cockpit-right">
+                
+                <!-- Study Content Generator (Upload or Manual) -->
+                <div class="card card-ai-generator">
+                    <div class="card-header">
+                        <i data-lucide="sparkles" class="card-icon text-purple"></i>
+                        <h2>AI Content Generation Space</h2>
+                    </div>
+                    
+                    <!-- Mode Selector Tab -->
+                    <div class="generator-tabs">
+                        <button class="gen-tab active" id="tab-option-1">Option 1: Upload Notes</button>
+                        <button class="gen-tab" id="tab-option-2">Option 2: Study Guide Prompt</button>
+                    </div>
+
+                    <!-- Option 1: Document Upload -->
+                    <div class="generator-pane active" id="pane-option-1">
+                        <form id="form-option-1">
+                            <div class="form-group">
+                                <label for="select-subject-1">Select Subject / Course</label>
+                                <select id="select-subject-1" required>
+                                    <option value="" disabled selected>Choose a subject</option>
+                                    <option value="Data Structures">Data Structures</option>
+                                    <option value="DBMS">DBMS</option>
+                                    <option value="Operating Systems">Operating Systems</option>
+                                    <option value="Computer Networks">Computer Networks</option>
+                                    <option value="Python Programming">Python Programming</option>
+                                    <option value="Other">Other (Type custom...)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group hide" id="custom-subject-wrapper-1">
+                                <label for="input-custom-subject-1">Custom Subject / Course Name</label>
+                                <input type="text" id="input-custom-subject-1" placeholder="e.g. Chemistry, Physics, Biology">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="input-topic-1">Chapter / Topic Title</label>
+                                <input type="text" id="input-topic-1" required placeholder="e.g. Normalization (1NF, 2NF, 3NF)">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="upload-text">Paste Lecture Notes, Assignments, or Syllabus Text</label>
+                                <textarea id="upload-text" rows="5" placeholder="Paste your study materials or assignment details here for the AI to process..."></textarea>
+                            </div>
+                            
+                            <div class="form-group file-upload-box">
+                                <label for="study-file" class="file-drop-area">
+                                    <i data-lucide="upload-cloud" class="upload-icon"></i>
+                                    <span>Drag & drop study file (PDF, PPT, Text) or <b>browse</b></span>
+                                    <p class="file-limit">Max size 5MB. Files are simulated instantly for demo.</p>
+                                    <input type="file" id="study-file" accept=".txt,.pdf,.doc,.docx" class="hide">
+                                </label>
+                                <div id="file-name-display" class="file-name-display hide">
+                                    <i data-lucide="file" class="file-icon"></i>
+                                    <span id="selected-file-name">filename.pdf</span>
+                                    <button type="button" id="remove-file-btn" class="btn-icon-danger"><i data-lucide="x"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="generator-actions">
+                                <button type="button" class="btn btn-primary" id="btn-generate-summary">
+                                    <i data-lucide="file-text"></i> Generate Summary
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btn-generate-quiz">
+                                    <i data-lucide="help-circle"></i> Generate Quiz
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Option 2: Topic Prompt Query -->
+                    <div class="generator-pane" id="pane-option-2">
+                        <form id="form-option-2">
+                            <div class="form-group">
+                                <label for="input-subject-2">Subject Title</label>
+                                <input type="text" id="input-subject-2" placeholder="e.g. Operating Systems">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="input-topic-2">Topic or Chapter Name</label>
+                                <input type="text" id="input-topic-2" placeholder="e.g. CPU Scheduling FCFS and Round Robin">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="custom-prompt">Add Custom AI Focus Directives (Optional)</label>
+                                <textarea id="custom-prompt" rows="3" placeholder="e.g. Write a brief overview focusing on the differences between preemptive and non-preemptive algorithms."></textarea>
+                            </div>
+
+                            <div class="generator-actions">
+                                <button type="button" class="btn btn-primary" id="btn-prompt-summary">
+                                    <i data-lucide="file-text"></i> Create Summary
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btn-prompt-quiz">
+                                    <i data-lucide="help-circle"></i> Create Quiz
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Daily Challenge of Day Card -->
+                <div class="card card-quest-today">
+                    <div class="card-header justify-between">
+                        <div class="header-title-group">
+                            <i data-lucide="target" class="card-icon text-pink"></i>
+                            <h2>Challenge Preview</h2>
+                        </div>
+                        <a href="/challenges" class="view-all-link">Manage Challenges <i data-lucide="chevron-right"></i></a>
+                    </div>
+                    <div class="challenge-preview-body" id="challenge-preview-container">
+                        <!-- Loaded dynamically -->
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AI Output Display Section (Floating/Scroll anchor) -->
+        <section class="ai-output-section hide" id="ai-output-area">
+            
+            <!-- AI Summary View -->
+            <div class="card card-summary-view hide" id="summary-result-card">
+                <div class="card-header justify-between">
+                    <div class="header-title-group">
+                        <i data-lucide="file-text" class="card-icon text-purple"></i>
+                        <h2 id="summary-title">Data Structures - Core Concepts</h2>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-outline btn-sm" id="btn-copy-summary" title="Copy text to clipboard">
+                            <i data-lucide="copy"></i> Copy
+                        </button>
+                        <button class="btn-icon" id="btn-close-summary" title="Close Panel">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="summary-body">
+                    <div class="summary-block">
+                        <h3>Detailed Summary</h3>
+                        <p id="summary-text-content">Loading summary...</p>
+                    </div>
+                    <div class="summary-block">
+                        <h3>Key Takeaways</h3>
+                        <ul id="summary-key-points">
+                            <!-- Populated via script -->
+                        </ul>
+                    </div>
+                    <div class="summary-block">
+                        <h3>Revision Notes</h3>
+                        <p id="summary-revision-notes" class="revision-notes-text">Loading notes...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Interactive Quiz View -->
+            <div class="card card-quiz-view hide" id="quiz-result-card">
+                <div class="card-header justify-between">
+                    <div class="header-title-group">
+                        <i data-lucide="help-circle" class="card-icon text-indigo"></i>
+                        <h2 id="quiz-title">Practice Quiz</h2>
+                    </div>
+                    <div class="card-actions">
+                        <span class="quiz-progress-text" id="quiz-progress-text">Question 1 of 5</span>
+                        <button class="btn-icon ml-2" id="btn-close-quiz" title="Close Panel">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="quiz-body">
+                    <!-- Progress Bar -->
+                    <div class="quiz-progress-track">
+                        <div class="quiz-progress-bar" id="quiz-progress-bar" style="width: 20%"></div>
+                    </div>
+                    
+                    <!-- Question Display -->
+                    <div class="quiz-question-box" id="quiz-question-box">
+                        <h3 class="quiz-question" id="quiz-question-text">Question text goes here?</h3>
+                        <div class="quiz-options" id="quiz-options-container">
+                            <!-- 4 Options loaded dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback box -->
+                    <div class="quiz-feedback hide" id="quiz-feedback-box">
+                        <div class="feedback-indicator">
+                            <i data-lucide="check" class="feedback-icon-success hide"></i>
+                            <i data-lucide="alert-circle" class="feedback-icon-error hide"></i>
+                            <span id="feedback-title">Correct!</span>
+                        </div>
+                        <p id="feedback-text">Feedback explanation goes here.</p>
+                    </div>
+                </div>
+
+                <div class="card-footer justify-between">
+                    <div class="quiz-score-badge hide" id="quiz-current-score-box">
+                        Score: <span id="quiz-score-num">0</span> / 5
+                    </div>
+                    <button class="btn btn-primary" id="btn-quiz-next">
+                        <span>Next Question</span> <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Achievements Alert Popup -->
+    <div class="achievement-popup-overlay hide" id="achievement-popup">
+        <div class="achievement-card">
+            <div class="confetti-glow"></div>
+            <i data-lucide="award" class="achievement-trophy animate-bounce"></i>
+            <h3 id="achievement-title">Level Up!</h3>
+            <p id="achievement-desc">Congratulations! You reached Level 2</p>
+            <div class="achievement-rewards">
+                <span class="reward-tag xp-tag"><i data-lucide="sparkles"></i> +100 XP</span>
+                <span class="reward-tag coin-tag"><i data-lucide="coins"></i> +20 Coins</span>
+            </div>
+            <button class="btn btn-primary" id="achievement-close-btn">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='api.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

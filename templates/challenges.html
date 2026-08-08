@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Challenges & Peer Groups – StudySync AI</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="logo">
+                <i data-lucide="sparkles" class="logo-icon"></i>
+                <span>StudySync <span class="accent-text">AI</span></span>
+            </a>
+            
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/challenges" class="nav-link active">Daily Challenges</a>
+                <a href="/profile" class="nav-link">My Profile</a>
+            </nav>
+
+            <div class="nav-actions">
+                <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+                
+                <div class="nav-stat" title="Current Daily Streak">
+                    <i data-lucide="zap" class="stat-icon text-orange"></i>
+                    <span id="nav-streak">{{ user.streak }}</span>
+                </div>
+                <div class="nav-stat" title="Gold Coins">
+                    <i data-lucide="coins" class="stat-icon text-gold"></i>
+                    <span id="nav-coins">{{ user.coins }}</span>
+                </div>
+                
+                <a href="/logout" class="btn btn-outline" id="btn-logout">Log Out</a>
+            </div>
+            
+            <button class="mobile-nav-toggle btn-icon" id="mobile-menu-btn" aria-label="Open navigation menu">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Dropdown Menu -->
+        <div class="mobile-nav-menu" id="mobile-menu">
+            <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
+            <a href="/challenges" class="mobile-nav-link active">Daily Challenges</a>
+            <a href="/profile" class="mobile-nav-link">My Profile</a>
+            <hr class="mobile-divider">
+            <div class="mobile-stats-row">
+                <div class="mobile-stat">
+                    <i data-lucide="zap" class="text-orange"></i> Streak: {{ user.streak }}
+                </div>
+                <div class="mobile-stat">
+                    <i data-lucide="coins" class="text-gold"></i> Coins: {{ user.coins }}
+                </div>
+            </div>
+            <a href="/logout" class="btn btn-outline w-full mt-2">Log Out</a>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Section Title -->
+        <section class="dashboard-welcome">
+            <div class="welcome-left">
+                <h1 class="welcome-title">Daily Quests & Study Groups ⚔️</h1>
+                <p class="welcome-motivation">Complete goals to secure XP and join study rooms with peers to maintain study momentum.</p>
+            </div>
+        </section>
+
+        <!-- Main Layout Grid -->
+        <div class="challenges-grid">
+            
+            <!-- Left Side: Daily Challenges List -->
+            <div class="challenges-left">
+                <div class="card card-quest-list">
+                    <div class="card-header justify-between">
+                        <div class="header-title-group">
+                            <i data-lucide="target" class="card-icon text-pink"></i>
+                            <h2>Active Daily Challenges</h2>
+                        </div>
+                        <span class="date-badge" id="challenge-date">Today</span>
+                    </div>
+
+                    <div class="quest-list" id="challenges-page-list">
+                        <!-- Loaded dynamically -->
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+
+                <!-- Peer Study Spaces -->
+                <div class="card card-rooms mt-6">
+                    <div class="card-header">
+                        <i data-lucide="users" class="card-icon text-cyan"></i>
+                        <h2>Study Rooms & Peer Groups</h2>
+                    </div>
+                    <p class="card-subtitle">Connect with other students studying the same courses. Share summaries, log study hours, and check off group goals.</p>
+                    
+                    <div class="custom-room-join mt-4 mb-4" style="background: rgba(147, 51, 234, 0.05); padding: 16px; border-radius: var(--border-radius); border: 1px dashed rgba(147, 51, 234, 0.3);">
+                        <h4 style="margin-bottom: 8px; font-weight: 600; color: var(--text-heading); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="key-round" class="icon-sm text-purple" style="width:16px; height:16px;"></i> Join Friend's Custom Study Room
+                        </h4>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="input-custom-room-id" placeholder="Enter custom room code (e.g. Avanish123)" style="flex-grow: 1; padding: 8px 12px; border-radius: var(--border-radius); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-color); font-size: 0.875rem;">
+                            <button class="btn btn-primary btn-sm" id="btn-join-custom-room">Join Room</button>
+                        </div>
+                    </div>
+                    
+                    <div class="rooms-grid">
+                        <!-- Room 1 -->
+                        <div class="room-card" data-room="algorithms">
+                            <div class="room-details">
+                                <h3 class="room-title">Data Structures & Algos</h3>
+                                <p class="room-desc">Solving Leetcode & discussing algorithmic complexities.</p>
+                                <span class="room-members"><i data-lucide="users" class="icon-sm"></i> 24 active</span>
+                            </div>
+                            <button class="btn btn-secondary btn-sm btn-join-room" data-room-id="algorithms" data-room-name="Data Structures & Algos">Join Room</button>
+                        </div>
+                        
+                        <!-- Room 2 -->
+                        <div class="room-card" data-room="dbms">
+                            <div class="room-details">
+                                <h3 class="room-title">DBMS Query Crew</h3>
+                                <p class="room-desc">SQL optimization, normalizations, and transaction locks.</p>
+                                <span class="room-members"><i data-lucide="users" class="icon-sm"></i> 18 active</span>
+                            </div>
+                            <button class="btn btn-secondary btn-sm btn-join-room" data-room-id="dbms" data-room-name="DBMS Query Crew">Join Room</button>
+                        </div>
+
+                        <!-- Room 3 -->
+                        <div class="room-card" data-room="os">
+                            <div class="room-details">
+                                <h3 class="room-title">OS Kernel Hackers</h3>
+                                <p class="room-desc">CPU scheduling, semaphores, and virtual memory threads.</p>
+                                <span class="room-members"><i data-lucide="users" class="icon-sm"></i> 12 active</span>
+                            </div>
+                            <button class="btn btn-secondary btn-sm btn-join-room" data-room-id="os" data-room-name="OS Kernel Hackers">Join Room</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Leaderboard & Chat panel -->
+            <div class="challenges-right">
+                
+                <!-- Chat Panel Container (Shown when a group is active) -->
+                <div class="card card-chat hide" id="study-group-chat">
+                    <div class="card-header justify-between bg-gradient-blue text-white">
+                        <div class="header-title-group">
+                            <i data-lucide="message-square" class="card-icon text-white"></i>
+                            <h2 id="chat-room-name">Algorithms Room</h2>
+                        </div>
+                        <button class="btn-icon text-white" id="close-chat-btn" title="Leave Room">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages-container">
+                        <!-- Populated dynamically with bots / manual messages -->
+                    </div>
+                    
+                    <form id="chat-input-form" class="chat-input-box">
+                        <input type="text" id="chat-message-input" required placeholder="Type a message or share a study tip...">
+                        <button type="submit" class="btn btn-primary btn-icon-only">
+                            <i data-lucide="send"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Global Leaderboard Card -->
+                <div class="card card-leaderboard" id="leaderboard-card">
+                    <div class="card-header">
+                        <i data-lucide="trophy" class="card-icon text-gold"></i>
+                        <h2>Weekly Study Leaderboard</h2>
+                    </div>
+                    <div class="leaderboard-list">
+                        <!-- Top 3 Header -->
+                        <div class="leaderboard-podium">
+                            <!-- Rank 2 -->
+                            <div class="podium-col p-2">
+                                <div class="podium-avatar border-silver">
+                                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=80" alt="Avatar">
+                                    <span class="podium-rank">2</span>
+                                </div>
+                                <span class="podium-name">Amit Mishra</span>
+                                <span class="podium-xp text-silver">2,850 XP</span>
+                            </div>
+                            <!-- Rank 1 -->
+                            <div class="podium-col p-1">
+                                <div class="podium-avatar border-gold">
+                                    <img src="https://images.unsplash.com/photo-1589156280159-27698a70f29e?auto=format&fit=crop&q=80&w=80" alt="Avatar">
+                                    <i data-lucide="crown" class="crown-icon"></i>
+                                    <span class="podium-rank">1</span>
+                                </div>
+                                <span class="podium-name">Sneha Patel</span>
+                                <span class="podium-xp text-gold">3,120 XP</span>
+                            </div>
+                            <!-- Rank 3 -->
+                            <div class="podium-col p-3">
+                                <div class="podium-avatar border-bronze">
+                                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=80" alt="Avatar">
+                                    <span class="podium-rank">3</span>
+                                </div>
+                                <span class="podium-name">Divya Sharma</span>
+                                <span class="podium-xp text-bronze">2,410 XP</span>
+                            </div>
+                        </div>
+
+                        <hr class="leaderboard-divider">
+
+                        <!-- List items -->
+                        <div class="leaderboard-item user-item">
+                            <span class="item-rank">4</span>
+                            <div class="item-avatar">
+                                <div class="avatar-placeholder">{{ user.full_name[:2].upper() }}</div>
+                            </div>
+                            <div class="item-details">
+                                <span class="item-name">{{ user.full_name }} (You)</span>
+                                <span class="item-stats">Level {{ user.level }} • {{ user.streak }} day streak</span>
+                            </div>
+                            <span class="item-score" id="leaderboard-user-xp">{{ user.xp }} XP</span>
+                        </div>
+
+                        <div class="leaderboard-item">
+                            <span class="item-rank">5</span>
+                            <div class="item-avatar">
+                                <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=80" alt="Avatar">
+                            </div>
+                            <div class="item-details">
+                                <span class="item-name">Rohan Gupta</span>
+                                <span class="item-stats">Level 3 • 4 day streak</span>
+                            </div>
+                            <span class="item-score">1,340 XP</span>
+                        </div>
+
+                        <div class="leaderboard-item">
+                            <span class="item-rank">6</span>
+                            <div class="item-avatar">
+                                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=80" alt="Avatar">
+                            </div>
+                            <div class="item-details">
+                                <span class="item-name">Priyanka Sen</span>
+                                <span class="item-stats">Level 2 • 3 day streak</span>
+                            </div>
+                            <span class="item-score">1,100 XP</span>
+                        </div>
+
+                        <div class="leaderboard-item">
+                            <span class="item-rank">7</span>
+                            <div class="item-avatar">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=80" alt="Avatar">
+                            </div>
+                            <div class="item-details">
+                                <span class="item-name">Vikram Malhotra</span>
+                                <span class="item-stats">Level 1 • 2 day streak</span>
+                            </div>
+                            <span class="item-score">950 XP</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Achievements Alert Popup -->
+    <div class="achievement-popup-overlay hide" id="achievement-popup">
+        <div class="achievement-card">
+            <div class="confetti-glow"></div>
+            <i data-lucide="award" class="achievement-trophy animate-bounce"></i>
+            <h3 id="achievement-title">Quest Complete!</h3>
+            <p id="achievement-desc">Congratulations! You claimed your challenge rewards</p>
+            <div class="achievement-rewards">
+                <span class="reward-tag xp-tag"><i data-lucide="sparkles"></i> +50 XP</span>
+                <span class="reward-tag coin-tag"><i data-lucide="coins"></i> +10 Coins</span>
+            </div>
+            <button class="btn btn-primary" id="achievement-close-btn">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='api.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
