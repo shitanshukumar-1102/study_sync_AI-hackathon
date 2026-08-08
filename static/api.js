@@ -94,5 +94,19 @@ window.StudySyncAPI = {
     getAnalyticsHistory: async function() {
         const res = await fetch('/api/analytics/history');
         return await res.json();
+    },
+
+    sendChatMessage: async function(room, text) {
+        const res = await fetch('/api/chat/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room, text })
+        });
+        return await res.json();
+    },
+
+    getChatMessages: async function(room) {
+        const res = await fetch(`/api/chat/messages?room=${room}`);
+        return await res.json();
     }
 };

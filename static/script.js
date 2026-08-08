@@ -7,6 +7,8 @@ let userProfile = null;
 let activeRoomBotInterval = null;
 let activeChatChannel = null;
 const chatSessionId = 'session-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+let chatPollInterval = null;
+const renderedMessageIds = new Set();
 
 window.StudySyncUI = {
     // --- INITIALIZATION ---
@@ -1322,39 +1324,34 @@ window.StudySyncUI = {
                 leaderboardCard.classList.add('hide'); // collapse leaderboard
                 
                 if (activeRoomBotInterval) clearInterval(activeRoomBotInterval);
-                if (activeChatChannel) {
-                    activeChatChannel.unsubscribe();
-                    activeChatChannel = null;
-                }
+                if (chatPollInterval) clearInterval(chatPollInterval);
+                renderedMessageIds.clear();
                 
                 // Clear chat bubble container and add system welcome
                 chatMessages.innerHTML = "";
                 appendBubble("System", `Welcome to custom room: ${roomCode.toUpperCase()}! Share this code with friends to study together.`, true);
                 this.showToast(`Joined custom room: ${roomCode}`, "success");
                 
-                const isMock = window.StudySyncAuth.isMockMode();
-                const supabase = window.StudySyncAuth.getSupabaseClient();
-                const myName = (userProfile && userProfile.full_name) || "Jane Doe";
+                // Poll backend for new messages
+                const fetchAndRenderMessages = async () => {
+                    try {
+                        const res = await window.StudySyncAPI.getChatMessages(roomCode);
+                        if (res.success && res.messages) {
+                            res.messages.forEach(msg => {
+                                if (!renderedMessageIds.has(msg.id)) {
+                                    renderedMessageIds.add(msg.id);
+                                    const isMe = msg.sender_id === (userProfile && (userProfile.id || userProfile.user_id) || "");
+                                    appendBubble(isMe ? "You" : msg.sender, msg.text, msg.sender === "System");
+                                }
+                            });
+                        }
+                    } catch(err) {
+                        console.error("Error fetching chat messages", err);
+                    }
+                };
                 
-                if (!isMock && supabase) {
-                    activeChatChannel = supabase.channel(`study-room-${roomCode}`);
-                    
-                    activeChatChannel
-                        .on('broadcast', { event: 'message' }, ({ payload }) => {
-                            if (payload.clientSessionId !== chatSessionId) {
-                                appendBubble(payload.sender, payload.text, payload.clientSessionId === "system");
-                            }
-                        })
-                        .subscribe((status) => {
-                            if (status === 'SUBSCRIBED') {
-                                activeChatChannel.send({
-                                    type: 'broadcast',
-                                    event: 'message',
-                                    payload: { sender: "System", clientSessionId: "system", text: `${myName} joined the private room.` }
-                                });
-                            }
-                        });
-                }
+                fetchAndRenderMessages();
+                chatPollInterval = setInterval(fetchAndRenderMessages, 2000);
                 
                 // Always start mock bot conversation loop to keep room active
                 activeRoomBotInterval = setInterval(() => {
@@ -1375,43 +1372,35 @@ window.StudySyncUI = {
                 chatPanel.classList.remove('hide');
                 leaderboardCard.classList.add('hide'); // collapse leaderboard to make room
                 
-                // Clear active bot loop if running
+                // Clear active bot loop and chat poll
                 if (activeRoomBotInterval) clearInterval(activeRoomBotInterval);
-                
-                // Unsubscribe from previous realtime channel
-                if (activeChatChannel) {
-                    activeChatChannel.unsubscribe();
-                    activeChatChannel = null;
-                }
+                if (chatPollInterval) clearInterval(chatPollInterval);
+                renderedMessageIds.clear();
                 
                 // Render initial history
                 renderChatHistory(roomId);
                 this.showToast(`Joined ${roomName} study space`, "success");
                 
-                const isMock = window.StudySyncAuth.isMockMode();
-                const supabase = window.StudySyncAuth.getSupabaseClient();
-                const myName = (userProfile && userProfile.full_name) || "Jane Doe";
+                // Poll backend for new messages
+                const fetchAndRenderMessages = async () => {
+                    try {
+                        const res = await window.StudySyncAPI.getChatMessages(roomId);
+                        if (res.success && res.messages) {
+                            res.messages.forEach(msg => {
+                                if (!renderedMessageIds.has(msg.id)) {
+                                    renderedMessageIds.add(msg.id);
+                                    const isMe = msg.sender_id === (userProfile && (userProfile.id || userProfile.user_id) || "");
+                                    appendBubble(isMe ? "You" : msg.sender, msg.text, msg.sender === "System");
+                                }
+                            });
+                        }
+                    } catch(err) {
+                        console.error("Error fetching chat messages", err);
+                    }
+                };
                 
-                if (!isMock && supabase) {
-                    // Connect to Supabase Realtime Broadcast Channel
-                    activeChatChannel = supabase.channel(`study-room-${roomId}`);
-                    
-                    activeChatChannel
-                        .on('broadcast', { event: 'message' }, ({ payload }) => {
-                            if (payload.clientSessionId !== chatSessionId) {
-                                appendBubble(payload.sender, payload.text, payload.clientSessionId === "system");
-                            }
-                        })
-                        .subscribe((status) => {
-                            if (status === 'SUBSCRIBED') {
-                                activeChatChannel.send({
-                                    type: 'broadcast',
-                                    event: 'message',
-                                    payload: { sender: "System", clientSessionId: "system", text: `${myName} joined the study room.` }
-                                });
-                            }
-                        });
-                }
+                fetchAndRenderMessages();
+                chatPollInterval = setInterval(fetchAndRenderMessages, 2000);
                 
                 // Always start mock bot conversation loop to keep room active for presentation
                 activeRoomBotInterval = setInterval(() => {
@@ -1426,10 +1415,8 @@ window.StudySyncUI = {
                 chatPanel.classList.add('hide');
                 leaderboardCard.classList.remove('hide');
                 if (activeRoomBotInterval) clearInterval(activeRoomBotInterval);
-                if (activeChatChannel) {
-                    activeChatChannel.unsubscribe();
-                    activeChatChannel = null;
-                }
+                if (chatPollInterval) clearInterval(chatPollInterval);
+                renderedMessageIds.clear();
             });
         }
 
@@ -1475,17 +1462,16 @@ window.StudySyncUI = {
                 appendBubble("You", text);
                 inp.value = "";
                 
-                const isMock = window.StudySyncAuth.isMockMode();
-                const myName = (userProfile && userProfile.full_name) || "Jane Doe";
-                
-                if (!isMock && activeChatChannel) {
-                    // Send to Supabase Broadcast channel
-                    activeChatChannel.send({
-                        type: 'broadcast',
-                        event: 'message',
-                        payload: { sender: myName, clientSessionId: chatSessionId, text: text }
+                // Send to Flask backend
+                window.StudySyncAPI.sendChatMessage(activeRoom, text)
+                    .then(res => {
+                        if (res.success && res.message) {
+                            renderedMessageIds.add(res.message.id);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error sending message", err);
                     });
-                }
                 
                 // Always trigger bot response quickly to reply to user
                 setTimeout(() => {

@@ -430,6 +430,59 @@ def api_rewards():
     return jsonify({"success": False, "error": "Invalid action"}), 400
 
 
+# In-memory chat message store
+chat_store = {}
+
+
+@app.route("/api/chat/send", methods=["POST"])
+@login_required
+def api_chat_send():
+    """Saves a new chat message for a study room."""
+    import datetime
+    import uuid
+    
+    data = request.json or {}
+    room = data.get("room")
+    text = data.get("text")
+    if not room or not text:
+        return jsonify({"success": False, "error": "Missing room or text"}), 400
+        
+    user_id = session["user_id"]
+    profile = db.get_user_profile(user_id)
+    sender_name = profile.get("full_name", "Student") if profile else "Student"
+    
+    msg_id = str(uuid.uuid4())
+    msg_time = datetime.datetime.now().strftime("%H:%M")
+    
+    new_message = {
+        "id": msg_id,
+        "sender": sender_name,
+        "sender_id": user_id,
+        "text": text,
+        "time": msg_time
+    }
+    
+    if room not in chat_store:
+        chat_store[room] = []
+    
+    chat_store[room].append(new_message)
+    chat_store[room] = chat_store[room][-50:] # Keep last 50
+    
+    return jsonify({"success": True, "message": new_message})
+
+
+@app.route("/api/chat/messages", methods=["GET"])
+@login_required
+def api_chat_messages():
+    """Retrieves all chat messages for a study room."""
+    room = request.args.get("room")
+    if not room:
+        return jsonify({"success": False, "error": "Missing room parameter"}), 400
+        
+    messages = chat_store.get(room, [])
+    return jsonify({"success": True, "messages": messages})
+
+
 @app.route("/api/analytics/history", methods=["GET"])
 @login_required
 def api_analytics_history():
